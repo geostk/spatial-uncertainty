@@ -1,0 +1,40 @@
+---
+title: "SU - Load Pre-Computed Distributions"
+author: "Michael LeFew"
+date: "January 25, 2016"
+output: html_document
+---
+
+Demonstration of loading pre-computed distributions.
+
+Here's loading saved R data frames and drawing from the distributions.
+
+```{r}
+#load distributions
+load("sumBinom.Rda")
+
+#draw from distributions
+samp1 <- sample(x=sum_dist.df$N,size=10000,replace=TRUE,prob=sum_dist.df$p)
+hist(samp1)
+
+samp2 <- sample(x=sum_dist2.df$N,size=10000,replace=TRUE,prob=sum_dist2.df$p)
+hist(samp2)
+
+```
+
+And here's loading and drawing from distributions saved in csv files.
+
+```{r}
+#load
+sum1.df <- read.csv("sumBinom1.csv",header=TRUE)
+
+sum2.df <- read.csv("sumBinom2.csv",header=TRUE)
+
+#draw
+samp1 <- sample(x=sum1.df$N,size=10000,replace=TRUE,prob=sum1.df$p)
+hist(samp1)
+
+samp2 <- sample(x=sum2.df$N,size=10000,replace=TRUE,prob=sum2.df$p)
+hist(samp2)
+
+```

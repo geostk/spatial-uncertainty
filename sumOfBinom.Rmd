@@ -124,7 +124,7 @@ error_dist.df <- data.frame(N = sum_dist.df$N - expected_val, p = sum_dist.df$p)
 plot(error_dist.df$N,error_dist.df$p,type="l")
 ```
 
-Lastly, we'll need to be able to increase the variance of the error distribution by factors lamda = {1.5,2,2.5,3} for SIMEX. Recall that the formula for variance in the discrete case is var = sum[(error-expected error)^2 x p(error)] = sum[error^2 x p(error)] in this case, since expected error is 0. To widen the distribution such that the variance increases by a factor lamda, we multipy each error value in the distribution by sqrt(lambda), such that we have altered error distribution with lambda x var = lambda x sum[error^2 x p(error)] = sum[(sqtr(lambda)xerror)^2 x p(error)].
+We'll need to be able to increase the variance of the error distribution by factors lamda = {1.5,2,2.5,3} for SIMEX. Recall that the formula for variance in the discrete case is var = sum[(error-expected error)^2 x p(error)] = sum[error^2 x p(error)] in this case, since expected error is 0. To widen the distribution such that the variance increases by a factor lamda, we multipy each error value in the distribution by sqrt(lambda), such that we have altered error distribution with lambda x var = lambda x sum[error^2 x p(error)] = sum[(sqtr(lambda)xerror)^2 x p(error)].
 
 ```{r}
 error_dist1_5.df <- data.frame(N=error_dist.df$N * sqrt(1.5), p=error_dist.df$p)
@@ -144,4 +144,76 @@ plot(error_dist2_5.df$N,error_dist2_5.df$p,type="l")
 plot(error_dist3.df$N,error_dist3.df$p,type="l")
 ```
 
-Boom.
+We want to be able to send a user the inputs necessary to run simulations such as SIMEX. If we were to send the inputs demonstrated above in a csv, the files would be impractically large. One alternative is to compute the distribution of the sum of binomials for an area of interest and save the R data frame, which can be delivered to and loaded on a users's machine. To demonstrate, we will create a second hypothetical region of interest, compute the distribution for money landing in it, and save this distribution along with the one from the above example in a .Rda file, load it, and draw from the two distributions.
+
+```{r}
+#make up projects for second ROI
+
+#number of dollars in each project
+lengths2 <- sample(10:150,projects)
+
+#ratio of area of interest overlap to area of project
+probs2 <- runif(projects,min=0,max=1)
+
+#initialize distribution of sums
+#with distribution of first project
+sum_dist2 <- dbinom(0:lengths[1],lengths[1],probs[1])
+
+#add distribution of each project in turn
+for (proj in 2:projects){
+  proj_dist2 <- dbinom(0:lengths[proj],lengths[proj],probs[proj])
+  sum_dist2 <- sumof.distributions(sum_dist2,proj_dist2)
+}
+
+#density distibution, N are sums of dollars, p are corresponding probabilities
+sum_dist2.df <- data.frame(N=0:(length(sum_dist2)-1),p=sum_dist2)
+
+#time
+ptm <- proc.time()
+
+#save distributions
+save(sum_dist.df, sum_dist2.df, file="sumBinom.Rda")
+
+#load distributions
+load("sumBinom.Rda")
+
+#draw from distributions
+samp1 <- sample(x=sum_dist.df$N,size=10000,replace=TRUE,prob=sum_dist.df$p)
+hist(samp1)
+
+samp2 <- sample(x=sum_dist2.df$N,size=10000,replace=TRUE,prob=sum_dist2.df$p)
+hist(samp2)
+
+#time
+time_taken <- proc.time() - ptm
+print(time_taken)
+```
+
+The second option is to save each distribution as a csv, which will only include the possible dollar amounts and the probability for each amount.
+
+```{r}
+#time
+ptm <- proc.time()
+
+#write separately
+write.csv(sum_dist.df,file="sumBinom1.csv",row.names=FALSE)
+
+write.csv(sum_dist2.df,file="sumBinom2.csv",row.names=FALSE)
+
+#load
+sum1.df <- read.csv("sumBinom1.csv",header=TRUE)
+
+sum2.df <- read.csv("sumBinom2.csv",header=TRUE)
+
+#draw
+samp1 <- sample(x=sum1.df$N,size=10000,replace=TRUE,prob=sum1.df$p)
+hist(samp1)
+
+samp2 <- sample(x=sum2.df$N,size=10000,replace=TRUE,prob=sum2.df$p)
+hist(samp2)
+
+#time
+time_taken <- proc.time() - ptm
+
+print(time_taken)
+```
